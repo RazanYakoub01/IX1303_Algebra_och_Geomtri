@@ -1,0 +1,156 @@
+%--------------------------------------------------------------------------
+% IX1303-VT2023: PROJEKTUPPGIFT 1, Linjära ekvationssystem
+%
+% Detta är en template.
+% Ni ska fylla i koden som efterfrågas och svara på frågorna.
+% Notera att alla svar på frågor måste skrivas på raden som börjar med "%".
+%--------------------------------------------------------------------------
+
+clearvars, clc
+
+% List över antalet frihetsgrader (värden på n) som ska studeras.
+% Här har vi alltså fyra olika fall som ska studeras, först n=1, sen n=30,
+% sen n=300 och till sist n=3000.
+nList = [3, 30, 300, 3000];
+
+% Loop över de olika frihetsgraderna.
+% Loopen innebär att koden mellan "for" och "end" kommer att köras 4 gånger
+% (eftersom length(nList)=4), först med i=1, sen i=2, i=3 och i=4.
+for i=1:length(nList)
+
+  % Här skapar vi en variabel n. Värdet på n är 3 först gången vi går
+  % igenom loopen, sen 30, 300 och 3000.
+  n=nList(i);
+
+  %----- SKRIV KOD: Skapa nxn matrisen A -----
+  I = eye(n); % Identitsmatris nxn
+  R = rand(n); % slumpmässigt matris med storlek nxn
+  k = n / max(sum(R,1)); % beräknar k värdet baserat på de största värdet av kolumnsumman i R
+  disp ("Max k " + k);
+  C = k * R; % beräknar fram matrisen C
+  colSum = sum(C, 1); % beräknar summan av varje kolumn i matrisen C
+
+ while any(colSum >= 1) % så länge det finns någon kolumnsumma som är större än eller lika med 1
+    k = k - 0.01; % minska k med 0.01
+    if (k<0) k = k + 0.01;
+    C = k*R; % beräknar om matrisen C med nya värdet på k
+    colSum = sum(C,1); % beräknar om summan av varje kolumn i matrisen 
+ end 
+      A = I - C;  % skapar slutliga matrisen 
+      %Test%
+      disp("colSum = " + colSum);
+      disp("Final k = " + k);
+      detA = det(A);  % beräknar deterimenten av matrisen A
+      disp("det(A) = " + detA); % förväntat resultat är att detA är inte lika med noll, eftersom A ska vara invertibel
+      
+
+  % Fråga: 
+  %   Här är A=I-C, där C=kR och R är en matris med slumptal
+  %   mellan 0 och 1. För vilka värden på k är kolumnsumman
+  %   alltid (för alla möjliga slumptal) mindre är 1?
+  % Svar: 
+  % Eftersom matrisen R innehåller slumpmässiga tal mellan 0 och 1, 
+  % kommer kolumnsumman för varje kolumn i R också vara mellan 0 och 1. 
+  % För att säkerställa att kolumnsumman i C är alltid mindre än 1, 
+  % måste k vara större än 0 och mindre än 1. Så, 0 < k < 1
+
+
+  %----- SKRIV KOD:Skapa kolumn-vektorn b -----
+  b = rand(n,1);  % n = vektorns storlek , nx1
+                  % det verkliga formen för att skapa en vektor med tal mellan 0 och 1 
+                  % är "b = 0 + (1-0) * rand(3,1)" 
+
+  %----- SKRIV KOD: Lös ekvationssystemet med mldivide -----
+  tic;      %startar tiden
+  x = A\b;  %löser ekvationssytem
+  T_mldivide(i) = toc; % sparar tiden det tog att lösa ekvationen
+  
+  %----- SKRIV KOD: Lös ekvationssystemet med inv -----
+  tic;            %startar tiden 
+  x = inv(A) * b; % löser ekvationssystem
+  T_inv(i) = toc; % sparar tiden det tog att lösa ekvationen
+
+  
+  %----- SKRIV KOD: Jämför lösningarna från mldivide och inv -----
+  diff = norm((A\b) - (inv(A) * b)); % beräkna skillnaden mellan lösningarna
+
+end
+
+%----- SKRIV KOD: Rita första figuren -----
+% skapa den första grafen
+figure
+plot(nList, T_mldivide, 'o-', 'LineWidth', 2)
+hold on
+plot(nList, T_inv, 's--', 'LineWidth', 2)
+xlabel('Antal obekanta')
+ylabel('Tid (s)')
+legend('mldivide', 'inv')
+title('Tid att lösa ekvationssystem')
+grid on
+%----- SKRIV KOD: Rita andra figuren -----
+% skapa den andra grafen med log-log skala
+figure
+loglog(nList, T_mldivide, 'o-', 'LineWidth', 2)
+hold on
+loglog(nList, T_inv, 's--', 'LineWidth', 2)
+xlabel('Antal obekanta')
+ylabel('Tid (s)')
+legend('mldivide', 'inv')
+title('Tid att lösa ekvationssystem med log-log skala')
+grid on
+
+% sätt x- och y-axlarna till log-skala
+set(gca,'xscale','log')
+set(gca,'yscale','log')
+
+
+
+% Frågor:
+% 1. Antag att du ska lösa ett problem med tre obekanta en eller ett par gånger. Hur väljer du metod? Är det viktigt att välja rätt metod?
+% SVAR: Om problemet har få obekanta, till exempel tre, 
+% kan man använda båda metoderna alltså inverteringsmetoden eller mldivide-operatorn,
+% och välja den som ger den mest exakta lösningen. 
+% Om man endast behöver lösa problemet en eller ett par gånger kan man använda vilken metod som helst utan att det har stor påverkan. 
+% Alltså det är ej viktigt i det här fallet vilket metod man väljer
+
+% 2. Antag att du ska lösa ett problem med tre obekanta 10 000 gånger. Hur väljer du metod? Är det viktigt att välja rätt metod?
+% SVAR: Om man behöver lösa ett problem med tre obekanta 10 000 gånger är det viktigt 
+% att välja den snabbaste metoden för att spara tid och resurser. 
+% I det här fallet är det troligtvis bättre att använda inv-metoden, 
+% eftersom enligt resultat figuren så verkar det vara snabbare än mldivide
+% när det gäller mindra antal obekanta
+
+% 3. Antag att du ska lösa ett problem med 3000 obekanta en eller ett par gånger. Hur väljer du metod? Är det viktigt att välja rätt metod?
+% SVAR: Här behöver man välja den metod som ger mest exakta och noggrana
+% resultat. Alltså det är viktigt att välja rätt metod 
+% eftersom vissa metoder kan ge bättre noggrannhet eller stabilitet än andra 
+% vilket är beroende på egenskaperna hos problemet. 
+% Som ett förslag så är bättre att välja mldivide eftersom det är snabbare
+% än inv-metoden när det gäller ett stort antal obekanta
+
+% 4. Kör om alla räkningar tre gånger. Varför får du olika resultat varje gång du kör programmet?
+% SVAR: Eftersom R-matrisen är slumpmässig kommer den att variera från körning till körning, 
+% vilket leder till variationer i matriserna A 
+% och även vektorn b som också genereras av slumpämssiga tal vid varje körning. 
+% Dessa variationer kommer att påverka lösningarna och beräkningstiderna.
+
+% 5. Hur stor är den relativa skillnaden i beräkningstid mellan de två metoderna för 3000 obekanta?
+% SVAR: Den relativa skillnaden i beräkningstid mellan mldivide och inv för 3000 obekanta 
+% kan beräknas genom att ta kvoten mellan tiderna för mldivide och inv. 
+% Vi kan beräkna detta som:
+
+rel_diff = T_mldivide(4)/T_inv(4) - 1;  % får relativa skillnaden i procent
+disp(rel_diff);
+
+% Där "4" representerar det sista värdet i listan "nList", dvs 3000 obekanta. 
+% Den faktiska relativa skillnaden i beräkningstid kan variera från körning till körning 
+% vilket är beroende på slumpmässiga variationer.
+
+
+% Egen notering : 
+% Mldivide-operatorn() , kan skrivas om genom "\": 
+% en effektiv inbyggd funktion i MATLAB 
+% som använder LU-faktorisering eller QR-faktorisering för att lösa ekvationssystem.
+
+
+
